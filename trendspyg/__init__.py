@@ -6,7 +6,7 @@ Download and monitor Google Trends data with support for 114 countries,
 51 US states, 20 categories, and real-time monitoring.
 """
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __author__ = "flack0x"
 __license__ = "MIT"
 
