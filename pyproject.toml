@@ -1,0 +1,97 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trendspy"
+version = "0.1.0"
+description = "Free, open-source Python library for Google Trends data - pytrends alternative with 188K+ configuration options"
+readme = "README.md"
+authors = [
+    {name = "flack0x", email = "your-email@example.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+keywords = [
+    "google-trends",
+    "trends",
+    "pytrends",
+    "data-analysis",
+    "seo",
+    "marketing",
+    "analytics",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "selenium>=4.15.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.1",
+    "black>=23.7.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+    "isort>=5.12.0",
+]
+cli = [
+    "click>=8.0.0",
+    "tqdm>=4.65.0",
+]
+analysis = [
+    "pandas>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/flack0x/trendspy"
+Documentation = "https://github.com/flack0x/trendspy#readme"
+Repository = "https://github.com/flack0x/trendspy"
+Issues = "https://github.com/flack0x/trendspy/issues"
+Changelog = "https://github.com/flack0x/trendspy/blob/main/CHANGELOG.md"
+
+[project.scripts]
+trendspy = "trendspy.cli:main"
+
+[tool.setuptools]
+packages = ["trendspy"]
+
+[tool.setuptools.package-data]
+trendspy = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=trendspy --cov-report=term-missing --cov-report=html"
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false

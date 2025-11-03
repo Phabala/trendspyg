@@ -205,3 +205,15 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project specific
+*.backup
+.claude/
+downloads/
+debug_screenshot.png
+
+# Old development files (keep for reference but don't track in git)
+simple_downloaders/
+monitors/
+utilities/
+batch_scripts/
