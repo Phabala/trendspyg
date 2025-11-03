@@ -23,7 +23,21 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import (
+    TimeoutException,
+    NoSuchElementException,
+    WebDriverException,
+    ElementClickInterceptedException
+)
 from datetime import datetime
+
+# Import config and exceptions
+from .config import COUNTRIES, US_STATES
+from .exceptions import (
+    InvalidParameterError,
+    BrowserError,
+    DownloadError
+)
 
 
 # Category mapping (internal Google names)
@@ -62,6 +76,119 @@ TIME_PERIODS = {
 SORT_OPTIONS = ['relevance', 'title', 'volume', 'recency']
 
 
+def _download_with_retry(download_func, max_retries=3):
+    """Wrapper to retry download with exponential backoff.
+
+    Args:
+        download_func: Function to call for download
+        max_retries: Maximum number of retry attempts
+
+    Returns:
+        Result of download_func
+
+    Raises:
+        Last exception if all retries fail
+    """
+    for attempt in range(max_retries):
+        try:
+            return download_func()
+        except (BrowserError, DownloadError, TimeoutException) as e:
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                print(f"[WARN] Attempt {attempt + 1} failed: {type(e).__name__}")
+                print(f"[INFO] Retrying in {wait_time}s... ({attempt + 2}/{max_retries})")
+                time.sleep(wait_time)
+            else:
+                # Last attempt failed, re-raise
+                print(f"[ERROR] All {max_retries} attempts failed")
+                raise
+
+
+def validate_geo(geo):
+    """Validate geo parameter against available countries and US states.
+
+    Args:
+        geo (str): Country or US state code
+
+    Raises:
+        InvalidParameterError: If geo code is invalid
+
+    Returns:
+        str: Validated geo code (uppercased)
+    """
+    geo = geo.upper()
+
+    if geo in COUNTRIES or geo in US_STATES:
+        return geo
+
+    # Try to find similar matches for helpful error message
+    similar = [code for code in list(COUNTRIES.keys()) + list(US_STATES.keys())
+               if code.startswith(geo[0]) if len(geo) > 0][:5]
+
+    error_msg = f"Invalid geo code '{geo}'."
+    if similar:
+        error_msg += f" Did you mean one of: {', '.join(similar)}?"
+    error_msg += f"\n\nAvailable: {len(COUNTRIES)} countries (US, CA, UK, DE, FR, ...) "
+    error_msg += f"or {len(US_STATES)} US states (CA, NY, TX, FL, ...)"
+    error_msg += "\n\nSee trendspyg.config.COUNTRIES and trendspyg.config.US_STATES for full list."
+
+    raise InvalidParameterError(error_msg)
+
+
+def validate_hours(hours):
+    """Validate hours parameter against available time periods.
+
+    Args:
+        hours (int): Time period in hours
+
+    Raises:
+        InvalidParameterError: If hours value is invalid
+
+    Returns:
+        int: Validated hours value
+    """
+    valid_hours = [4, 24, 48, 168]
+
+    if hours in valid_hours:
+        return hours
+
+    raise InvalidParameterError(
+        f"Invalid hours value '{hours}'. Must be one of: {valid_hours}\n"
+        f"  4   = Past 4 hours\n"
+        f"  24  = Past 24 hours (1 day)\n"
+        f"  48  = Past 48 hours (2 days)\n"
+        f"  168 = Past 168 hours (7 days)"
+    )
+
+
+def validate_category(category):
+    """Validate category parameter against available categories.
+
+    Args:
+        category (str): Category name
+
+    Raises:
+        InvalidParameterError: If category is invalid
+
+    Returns:
+        str: Validated category (lowercased)
+    """
+    category = category.lower()
+
+    if category in CATEGORIES:
+        return category
+
+    # Try to find similar matches
+    similar = [cat for cat in CATEGORIES.keys() if cat.startswith(category[:3]) if len(category) >= 3][:5]
+
+    error_msg = f"Invalid category '{category}'."
+    if similar:
+        error_msg += f" Did you mean one of: {', '.join(similar)}?"
+    error_msg += f"\n\nAvailable categories: {', '.join(sorted(CATEGORIES.keys()))}"
+
+    raise InvalidParameterError(error_msg)
+
+
 def download_google_trends_csv(geo='US', hours=24, category='all', active_only=False,
                                sort_by='relevance', headless=True, download_dir=None):
     """
@@ -78,7 +205,16 @@ def download_google_trends_csv(geo='US', hours=24, category='all', active_only=F
 
     Returns:
         str: Path to downloaded file or None if failed
+
+    Raises:
+        InvalidParameterError: If any parameters are invalid
+        BrowserError: If browser automation fails
+        DownloadError: If file download fails
     """
+    # Validate input parameters
+    geo = validate_geo(geo)
+    hours = validate_hours(hours)
+    category = validate_category(category)
 
     # Setup download directory
     if download_dir is None:
@@ -117,7 +253,18 @@ def download_google_trends_csv(geo='US', hours=24, category='all', active_only=F
     print(f"       Active only: {active_only}")
     print(f"       Sort: {sort_by}")
 
-    driver = webdriver.Chrome(options=chrome_options)
+    # Initialize browser with error handling
+    try:
+        driver = webdriver.Chrome(options=chrome_options)
+    except WebDriverException as e:
+        raise BrowserError(
+            f"Failed to start Chrome browser: {e}\n\n"
+            "Please ensure:\n"
+            "1. Chrome browser is installed\n"
+            "2. ChromeDriver is compatible with your Chrome version\n"
+            "3. You have proper permissions\n\n"
+            "ChromeDriver is auto-downloaded by Selenium, but you need Chrome browser installed."
+        )
 
     try:
         # Build URL with parameters
@@ -163,8 +310,9 @@ def download_google_trends_csv(geo='US', hours=24, category='all', active_only=F
                 # Press ESC to close menu
                 driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
                 time.sleep(1)
-            except Exception as e:
-                print(f"[WARN] Could not toggle active trends: {e}")
+            except (TimeoutException, NoSuchElementException) as e:
+                print(f"[WARN] Could not toggle 'Active trends only' filter - using all trends")
+                print(f"       Reason: UI element not found (Google may have changed their interface)")
 
         # 2. Apply sort if not default (relevance)
         # NOTE: Sort appears to only affect UI table display, not CSV export order
@@ -186,12 +334,29 @@ def download_google_trends_csv(geo='US', hours=24, category='all', active_only=F
         )
         driver.execute_script("arguments[0].click();", download_csv)
 
-        # Wait for download
-        time.sleep(5)
+        # Wait for download with dynamic file checking
+        print("[INFO] Waiting for file download...")
+        max_wait_time = 10  # Maximum 10 seconds
+        check_interval = 0.5  # Check every 0.5 seconds
+        elapsed_time = 0
+        new_files = set()
 
-        # Find new file
-        current_files = set(f for f in os.listdir(download_dir) if f.endswith('.csv'))
-        new_files = current_files - existing_files
+        while elapsed_time < max_wait_time:
+            time.sleep(check_interval)
+            elapsed_time += check_interval
+
+            # Check for new files
+            current_files = set(f for f in os.listdir(download_dir) if f.endswith('.csv'))
+            new_files = current_files - existing_files
+
+            if new_files:
+                print(f"[INFO] File detected after {elapsed_time:.1f}s")
+                break
+
+        # Final check if loop ended without finding file
+        if not new_files:
+            current_files = set(f for f in os.listdir(download_dir) if f.endswith('.csv'))
+            new_files = current_files - existing_files
 
         if new_files:
             downloaded_file = list(new_files)[0]
@@ -208,14 +373,55 @@ def download_google_trends_csv(geo='US', hours=24, category='all', active_only=F
             print(f"[OK] Location: {new_path}")
             return new_path
         else:
-            print("[FAIL] No new file detected")
-            return None
+            raise DownloadError(
+                "No new file detected after download attempt.\n\n"
+                "Possible causes:\n"
+                "- Download may have failed silently\n"
+                "- File may have been downloaded to a different location\n"
+                "- Network timeout during download\n\n"
+                f"Expected download directory: {download_dir}"
+            )
+
+    except TimeoutException as e:
+        raise BrowserError(
+            f"Page load timeout: {e}\n\n"
+            "Possible causes:\n"
+            "- Slow internet connection\n"
+            "- Google Trends website is down or slow\n"
+            "- Network firewall blocking access\n\n"
+            "Try again with a better connection or check https://trends.google.com/trending"
+        )
+
+    except NoSuchElementException as e:
+        raise BrowserError(
+            f"Could not find UI element: {e}\n\n"
+            "Possible causes:\n"
+            "- Google Trends changed their website design\n"
+            "- Page did not load correctly\n\n"
+            "Solutions:\n"
+            "- Update trendspyg: pip install --upgrade trendspyg\n"
+            "- Check GitHub issues: https://github.com/flack0x/trendspyg/issues\n"
+            "- Report this issue if it persists"
+        )
+
+    except ElementClickInterceptedException as e:
+        raise BrowserError(
+            f"Could not click UI element: {e}\n\n"
+            "An element is blocking the click. This may be temporary.\n"
+            "Try running again - this often resolves automatically."
+        )
+
+    except (InvalidParameterError, BrowserError, DownloadError):
+        # Re-raise our custom exceptions without wrapping
+        raise
 
     except Exception as e:
-        print(f"[ERROR] {e}")
-        import traceback
-        traceback.print_exc()
-        return None
+        # Catch any other unexpected errors
+        raise BrowserError(
+            f"Unexpected error during download: {type(e).__name__}: {e}\n\n"
+            "This is an unexpected error. Please report it at:\n"
+            "https://github.com/flack0x/trendspyg/issues"
+        )
 
     finally:
         driver.quit()

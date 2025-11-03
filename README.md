@@ -34,6 +34,19 @@
 pip install trendspyg
 ```
 
+### Prerequisites
+
+**Required:**
+- **Chrome Browser** must be installed on your system
+  - Download: [https://www.google.com/chrome/](https://www.google.com/chrome/)
+  - ChromeDriver is automatically managed by Selenium
+  - trendspyg uses browser automation to access Google Trends data
+
+**System Requirements:**
+- Python 3.8 or higher
+- Active internet connection
+- Permissions to download files
+
 ### Basic Usage
 
 ```python
@@ -172,6 +185,70 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - **Academic Research** - Economic forecasting, social trends
 - **Trading & Finance** - Market sentiment analysis
 - **Data Analysis** - Dashboards, visualizations
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**"Chrome browser not found" or "WebDriver error"**
+```
+Solution:
+1. Install Chrome browser: https://www.google.com/chrome/
+2. Ensure Chrome is in your PATH
+3. Update trendspyg: pip install --upgrade trendspyg
+```
+
+**"Invalid geo code" error**
+```python
+# ❌ Wrong
+download_google_trends_csv(geo="USA")  # Should be "US"
+
+# ✅ Correct
+download_google_trends_csv(geo="US")   # Two-letter country code
+```
+See all valid codes: `from trendspyg.config import COUNTRIES, US_STATES`
+
+**"Invalid hours value" error**
+```python
+# ❌ Wrong
+download_google_trends_csv(hours=12)  # Not supported
+
+# ✅ Correct - Use one of: 4, 24, 48, 168
+download_google_trends_csv(hours=24)  # Past 24 hours
+```
+
+**"No such element" or UI changed**
+```
+This means Google Trends changed their website layout.
+
+Solution:
+1. Update trendspyg: pip install --upgrade trendspyg
+2. Check GitHub issues: https://github.com/flack0x/trendspyg/issues
+3. Report the issue if not already reported
+```
+
+**Download timeout or slow connection**
+- The library automatically retries 3 times with exponential backoff
+- Increase wait time if on slow connection (this is automatic)
+- Check if trends.google.com is accessible in your browser
+
+**File not downloading**
+```
+Check:
+- Download directory permissions
+- Antivirus/firewall not blocking
+- Disk space available
+- Default: ./downloads/ folder
+```
+
+### Getting Help
+
+1. **Check Error Message** - Error messages include specific solutions
+2. **Search Issues** - [GitHub Issues](https://github.com/flack0x/trendspyg/issues)
+3. **Report Bug** - Include full error message and code snippet
+4. **Ask Community** - [GitHub Discussions](https://github.com/flack0x/trendspyg/discussions)
 
 ---
 
