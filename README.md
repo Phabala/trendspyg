@@ -13,12 +13,13 @@
 
 ## ✨ Features
 
+- 🔥 **"Trending Now" data** - Real-time trending searches from Google
 - 🌍 **114 countries** supported
 - 🗺️ **51 US states** + sub-regions
 - 📊 **20 categories** (sports, entertainment, technology, etc.)
 - ⏰ **4 time periods** (4h, 24h, 48h, 7 days)
-- 📈 **Real-time monitoring** (~1 minute update frequency)
-- 🎯 **Active trends filtering**
+- 📈 **Updated every ~1 minute** - Google refreshes trending data frequently
+- 🎯 **Active trends filtering** - Show only rising trends
 - 🔄 **4 sort options** (relevance, title, volume, recency)
 - 📦 **Easy installation** - just `pip install trendspy`
 - 🆓 **100% free** and open-source
@@ -38,28 +39,67 @@ pip install trendspy
 ### Basic Usage
 
 ```python
-from trendspy import TrendsDownloader
+from trendspy.downloader import download_google_trends_csv
 
 # Download trends (default: US, past 24 hours, all categories)
-trends = TrendsDownloader()
-data = trends.download()
+file_path = download_google_trends_csv()
+# Returns: "trends_US_24h_all_20251103-041108.csv"
 ```
 
 ### Advanced Usage
 
 ```python
-from trendspy import TrendsDownloader
+from trendspy.downloader import download_google_trends_csv
 
 # California, past 7 days, sports only, sorted by volume
-trends = TrendsDownloader()
-data = trends.download(
+file_path = download_google_trends_csv(
     geo='US-CA',          # State-level support!
     hours=168,            # 7 days
     category='sports',    # Filter by category
     active_only=True,     # Only rising trends
     sort_by='volume'      # Sort by popularity
 )
+# Returns path to downloaded CSV file
 ```
+
+---
+
+## 📊 Data Format & Output
+
+### What Data Source?
+
+trendspy fetches data from Google's **"Trending Now"** section - real-time trending searches updated approximately every minute.
+
+> **Note:** This is different from the "Explore" page on Google Trends. Support for "Explore" page data (historical trends, comparison charts, etc.) is planned for v0.2.0+.
+
+### CSV Output Format
+
+Each download returns a CSV file with the following columns:
+
+| Column | Description | Example |
+|--------|-------------|---------|
+| **Trends** | Main search keyword | "bills", "vikings vs lions" |
+| **Search volume** | Popularity tier | 50K+, 100K+, 200K+, 500K+, 1M+ |
+| **Started** | When trend started | "November 2, 2025 at 11:00:00 PM UTC+2" |
+| **Ended** | When trend ended (if applicable) | Usually empty for active trends |
+| **Trend breakdown** | Related search terms (comma-separated) | "buffalo bills,bills chiefs,josh allen,..." |
+| **Explore link** | Direct Google Trends URL | https://trends.google.com/trends/explore?q=... |
+
+### Example Output
+
+```csv
+"Trends","Search volume","Started","Ended","Trend breakdown","Explore link"
+"bills","1M+","November 2, 2025 at 11:00:00 PM UTC+2",,"buffalo bills,kansas city chiefs vs buffalo bills,bills chiefs,josh allen,...","https://trends.google.com/trends/explore?q=bills&geo=US&hl=en-US"
+"vikings vs lions","1M+","November 2, 2025 at 3:20:00 PM UTC+2",,"lions vs vikings,detroit lions,lions game,vikings game,...","https://trends.google.com/trends/explore?q=vikings%20vs%20lions&geo=US&hl=en-US"
+```
+
+### Why This Data is Valuable
+
+- **Real-time insights** - See what's trending RIGHT NOW
+- **Search volume tiers** - Gauge popularity at a glance
+- **Related keywords** - Discover content ideas and variations (perfect for SEO)
+- **Direct exploration** - Click through to deep-dive any trend
+- **Easy analysis** - CSV format works with Excel, Python, R, or any data tool
 
 ---
 
@@ -134,21 +174,25 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ## 🗺️ Roadmap
 
 ### v0.1.0 (Current)
-- ✅ Core download functionality
+- ✅ "Trending Now" data downloads
 - ✅ 188,000+ configuration options
 - ✅ Python package structure
+- ✅ 114 countries + 51 US states
+- ✅ CSV output format
 
 ### v0.2.0 (Coming Soon)
 - [ ] CLI tool (`trendspy download --geo US-CA`)
-- [ ] Real-time monitoring
+- [ ] Google Trends "Explore" page data (historical trends, comparisons)
+- [ ] Real-time monitoring mode
 - [ ] Batch downloads
 - [ ] Enhanced error handling
 
 ### v0.3.0 (Future)
 - [ ] Pandas integration
-- [ ] Export formats (JSON, Excel)
+- [ ] Export formats (JSON, Excel, Parquet)
 - [ ] Caching layer
 - [ ] Async support
+- [ ] Data visualization helpers
 
 ---
 
