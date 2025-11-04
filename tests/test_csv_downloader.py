@@ -75,7 +75,7 @@ class TestCSVValidation:
         with pytest.raises(InvalidParameterError) as exc_info:
             download_google_trends_csv(geo='US', output_format='xml')
 
-        assert 'Invalid output_format' in str(exc_info.value)
+        assert 'Unsupported output format' in str(exc_info.value)
 
     def test_valid_country_codes(self):
         """Test that validation accepts valid country codes"""
