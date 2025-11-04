@@ -91,6 +91,10 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "--cov=trendspyg --cov-report=term-missing --cov-report=html"
+markers = [
+    "network: tests that require network access",
+    "slow: tests that take a long time to run",
+]
 
 [tool.mypy]
 python_version = "3.9"

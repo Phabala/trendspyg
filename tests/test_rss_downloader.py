@@ -6,6 +6,7 @@ from trendspyg import download_google_trends_rss
 from trendspyg.exceptions import InvalidParameterError
 
 
+@pytest.mark.network
 class TestRSSBasicFunctionality:
     """Test basic RSS download functionality"""
 
@@ -47,6 +48,7 @@ class TestRSSBasicFunctionality:
         assert 'image' not in trends[0]
 
 
+@pytest.mark.network
 class TestRSSOutputFormats:
     """Test different output formats"""
 
@@ -94,6 +96,7 @@ class TestRSSOutputFormats:
         assert 'traffic' in df.columns
 
 
+@pytest.mark.network
 class TestRSSValidation:
     """Test input validation"""
 
@@ -124,6 +127,7 @@ class TestRSSValidation:
         assert len(trends) > 0
 
 
+@pytest.mark.network
 class TestRSSDataStructure:
     """Test the structure of returned data"""
 
@@ -157,6 +161,7 @@ class TestRSSDataStructure:
             assert len(trends[0]['news_articles']) <= 2
 
 
+@pytest.mark.network
 class TestRSSErrorHandling:
     """Test error handling"""
 
