@@ -67,9 +67,8 @@ Repository = "https://github.com/flack0x/trendspyg"
 Issues = "https://github.com/flack0x/trendspyg/issues"
 Changelog = "https://github.com/flack0x/trendspyg/blob/main/CHANGELOG.md"
 
-# [project.scripts]
-# CLI tool coming in v0.2.0
-# trendspyg = "trendspyg.cli:main"
+[project.scripts]
+trendspyg = "trendspyg.cli:main"
 
 [tool.setuptools]
 packages = ["trendspyg"]

@@ -16,6 +16,7 @@
 
 ### Trending Now (Real-time Data)
 - 🔥 **"Trending now" data** - Real-time trending searches from Google Trends
+- ⌨️ **CLI + Python API** - Use from terminal or code
 - 🌍 **125 countries** supported
 - 🗺️ **51 US states** + sub-regions
 - 📊 **20 categories** (sports, entertainment, technology, etc.)
@@ -37,8 +38,35 @@
 ### Installation
 
 ```bash
+# Basic installation
 pip install trendspyg
+
+# With CLI support
+pip install trendspyg[cli]
+
+# With all features (CLI + analysis)
+pip install trendspyg[cli,analysis]
 ```
+
+### Two Ways to Use
+
+trendspyg offers **both Python API and CLI**:
+
+#### 🐍 **Python API** (Programmatic Access)
+```python
+from trendspyg import download_google_trends_rss
+trends = download_google_trends_rss(geo='US')
+```
+
+#### ⌨️ **Command Line** (Terminal Access)
+```bash
+trendspyg rss --geo US
+trendspyg csv --geo US-CA --category sports
+```
+
+> See [CLI.md](CLI.md) for complete CLI documentation
+
+---
 
 ### Two Data Sources - Choose Your Path
 

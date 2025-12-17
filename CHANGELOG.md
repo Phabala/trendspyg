@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Command-Line Interface (CLI)** - Full-featured terminal interface
+  - `trendspyg rss` - Fast RSS downloads from terminal
+  - `trendspyg csv` - Comprehensive CSV downloads from terminal
+  - `trendspyg list` - List available options (countries, states, categories)
+  - `trendspyg info` - Package information and statistics
+  - All API features accessible via CLI
+  - Requires `pip install trendspyg[cli]`
+
+### Changed
+- Verified all 125 countries return actual trends data (tested RSS + CSV)
+- Updated country count documentation from 114 to 125 across all files
+
 ## [0.2.0] - 2025-11-04
 
 ### Added
