@@ -566,16 +566,17 @@ Check:
 
 ## 🗺️ Roadmap
 
-### v0.2.0 (Current)
+### v0.3.0 (Current - December 2025)
+- ✅ **CLI tool** - Full terminal interface
 - ✅ "Trending now" data downloads (RSS feed + CSV export)
 - ✅ 188,000+ configuration options
-- ✅ 125 countries + 51 US states
+- ✅ 125 countries + 51 US states (all verified working)
+- ✅ 4 time periods verified (4h, 24h, 48h, 7d)
 - ✅ 4 output formats (CSV, JSON, Parquet, DataFrame)
 - ✅ Full type hints
 - ✅ Active trends filtering
 
-### v0.3.0 (Coming Soon)
-- [ ] CLI tool (`trendspyg download --geo US-CA`)
+### v0.4.0 (Coming Soon)
 - [ ] Real-time monitoring mode
 - [ ] Batch downloads
 - [ ] Enhanced error handling

@@ -21,7 +21,7 @@ from .rss_downloader import download_google_trends_rss
 
 
 @click.group()
-@click.version_option(version="0.2.0", prog_name="trendspyg")
+@click.version_option(version="0.3.0", prog_name="trendspyg")
 def cli() -> None:
     """
     trendspyg - Google Trends data downloader
@@ -288,7 +288,7 @@ def info() -> None:
     click.echo("\n" + "="*60)
     click.echo("trendspyg - Google Trends Data Downloader")
     click.echo("="*60)
-    click.echo(f"\nVersion: 0.2.0")
+    click.echo(f"\nVersion: 0.3.0")
     click.echo(f"License: MIT")
     click.echo(f"Homepage: https://github.com/flack0x/trendspyg")
     click.echo(f"\nSupported Options:")

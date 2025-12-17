@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "trendspyg"
-version = "0.2.0"
-description = "Free, open-source Python library for real-time Google Trends data with time filtering - pytrends alternative with 188K+ configurations"
+version = "0.3.0"
+description = "Free, open-source Python library for real-time Google Trends data with CLI and API - pytrends alternative with 188K+ configurations"
 readme = "README.md"
 authors = [
     {name = "flack0x", email = "ali.marodis2@gmail.com"}
