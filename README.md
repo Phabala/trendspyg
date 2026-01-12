@@ -1,7 +1,7 @@
 # trendspyg
 
 [![PyPI version](https://img.shields.io/pypi/v/trendspyg.svg)](https://pypi.org/project/trendspyg/)
-[![Downloads](https://img.shields.io/pypi/dm/trendspyg.svg)](https://pypi.org/project/trendspyg/)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/trendspyg?period=total&units=none&left_color=black&right_color=green&left_text=downloads)](https://pepy.tech/projects/trendspyg)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://github.com/flack0x/trendspyg/actions/workflows/tests.yml/badge.svg)](https://github.com/flack0x/trendspyg/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
