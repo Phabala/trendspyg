@@ -283,7 +283,9 @@ def download_google_trends_csv(
     sort_by: str = 'relevance',
     headless: bool = True,
     download_dir: Optional[str] = None,
-    output_format: OutputFormat = 'csv'
+    output_format: OutputFormat = 'csv',
+    driver_executable_path: Optional[str] = None,
+    browser_executable_path: Optional[str] = None,
 ) -> Union[str, 'pd.DataFrame', None]:
     """
     Download Google Trends data with configurable filters and output formats
@@ -297,6 +299,8 @@ def download_google_trends_csv(
         headless: Run browser in headless mode
         download_dir: Directory to save file
         output_format: Output format (csv, json, parquet, dataframe)
+        driver_executable_path: Path to chromedriver binary (skip auto-download if set)
+        browser_executable_path: Path to Chrome/Chromium binary
 
     Returns:
         Path to downloaded file (for csv/json/parquet) or DataFrame (for dataframe format),
@@ -393,7 +397,12 @@ def download_google_trends_csv(
 
     # Initialize browser with undetected-chromedriver
     try:
-        driver = uc.Chrome(options=chrome_options, use_subprocess=True)
+        uc_kwargs = dict(options=chrome_options, use_subprocess=True)
+        if driver_executable_path:
+            uc_kwargs["driver_executable_path"] = driver_executable_path
+        if browser_executable_path:
+            uc_kwargs["browser_executable_path"] = browser_executable_path
+        driver = uc.Chrome(**uc_kwargs)
 
         # Additional anti-detection: Execute CDP commands to hide automation
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
