@@ -16,9 +16,13 @@ Usage Examples:
 
 import os
 import time
+import random
 import argparse
 from typing import Optional, Callable, Any, Dict, Set, List, Literal, Union, TYPE_CHECKING
-from selenium import webdriver
+
+# Anti-detection: Use undetected-chromedriver instead of regular selenium
+import undetected_chromedriver as uc
+from fake_useragent import UserAgent
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -26,7 +30,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import (
     TimeoutException,
     NoSuchElementException,
@@ -319,15 +322,57 @@ def download_google_trends_csv(
     # Get existing files
     existing_files = set(f for f in os.listdir(download_dir) if f.endswith('.csv'))
 
-    # Setup Chrome options
-    chrome_options = Options()
+    # ==================== Anti-Detection Setup ====================
+    # Using undetected-chromedriver to bypass bot detection
+
+    # Random User-Agent for each session
+    try:
+        ua = UserAgent()
+        user_agent = ua.random
+    except Exception:
+        # Fallback to a common User-Agent if fake-useragent fails
+        user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+    # Random viewport size (common resolutions)
+    viewports = [
+        (1920, 1080), (1366, 768), (1536, 864), (1440, 900),
+        (1280, 720), (1600, 900), (1680, 1050), (2560, 1440)
+    ]
+    viewport_width, viewport_height = random.choice(viewports)
+
+    # Setup Chrome options with anti-detection
+    chrome_options = uc.ChromeOptions()
+
+    # Download preferences
     prefs = {
         "download.default_directory": download_dir,
         "download.prompt_for_download": False,
         "download.directory_upgrade": True,
-        "safebrowsing.enabled": True
+        "safebrowsing.enabled": True,
+        # Disable automation flags in preferences
+        "credentials_enable_service": False,
+        "profile.password_manager_enabled": False,
     }
     chrome_options.add_experimental_option("prefs", prefs)
+
+    # Anti-detection arguments
+    chrome_options.add_argument(f"--user-agent={user_agent}")
+    chrome_options.add_argument(f"--window-size={viewport_width},{viewport_height}")
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_argument("--disable-infobars")
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--disable-popup-blocking")
+    chrome_options.add_argument("--start-maximized")
+    chrome_options.add_argument("--ignore-certificate-errors")
+
+    # Language and locale - match to geo parameter for consistency
+    # This avoids suspicious patterns like "UK browser requesting US data"
+    geo_to_locale = {
+        "US": "en-US", "GB": "en-GB", "UK": "en-GB", "CA": "en-CA",
+        "AU": "en-AU", "NZ": "en-NZ", "IE": "en-IE"
+    }
+    locale = geo_to_locale.get(geo, "en-US")  # Default to en-US for non-English countries
+    chrome_options.add_argument(f"--lang={locale}")
 
     if headless:
         chrome_options.add_argument("--headless=new")
@@ -337,26 +382,67 @@ def download_google_trends_csv(
 
     # Suppress logging
     chrome_options.add_argument("--log-level=3")
-    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-    print(f"[INFO] Opening Google Trends...")
+    print(f"[INFO] Opening Google Trends (with anti-detection)...")
     print(f"       Location: {geo}")
     print(f"       Time: Past {hours} hours")
     print(f"       Category: {category}")
     print(f"       Active only: {active_only}")
     print(f"       Sort: {sort_by}")
+    print(f"       Viewport: {viewport_width}x{viewport_height}")
 
-    # Initialize browser with error handling
+    # Initialize browser with undetected-chromedriver
     try:
-        driver = webdriver.Chrome(options=chrome_options)
+        driver = uc.Chrome(options=chrome_options, use_subprocess=True)
+
+        # Additional anti-detection: Execute CDP commands to hide automation
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": """
+                // Hide webdriver property
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined
+                });
+
+                // Hide automation-related properties
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5]
+                });
+
+                // Mock languages
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['en-US', 'en', 'ko']
+                });
+
+                // Hide Chrome automation
+                window.chrome = {
+                    runtime: {}
+                };
+
+                // Override permissions query
+                const originalQuery = window.navigator.permissions.query;
+                window.navigator.permissions.query = (parameters) => (
+                    parameters.name === 'notifications' ?
+                        Promise.resolve({ state: Notification.permission }) :
+                        originalQuery(parameters)
+                );
+            """
+        })
+
+        # Explicitly set download directory via CDP
+        # (undetected-chromedriver may ignore prefs-based download settings)
+        driver.execute_cdp_cmd("Page.setDownloadBehavior", {
+            "behavior": "allow",
+            "downloadPath": download_dir
+        })
+
     except WebDriverException as e:
         raise BrowserError(
             f"Failed to start Chrome browser: {e}\n\n"
             "Please ensure:\n"
             "1. Chrome browser is installed\n"
-            "2. ChromeDriver is compatible with your Chrome version\n"
+            "2. undetected-chromedriver is installed: pip install undetected-chromedriver\n"
             "3. You have proper permissions\n\n"
-            "ChromeDriver is auto-downloaded by Selenium, but you need Chrome browser installed."
+            "undetected-chromedriver will auto-download the correct ChromeDriver."
         )
 
     try:
@@ -375,10 +461,16 @@ def download_google_trends_csv(
         print(f"[INFO] Navigating to: {url}")
         driver.get(url)
 
+        # Human-like delay after page load
+        time.sleep(random.uniform(1.5, 3.0))
+
         # Wait for page to load by checking for Export button
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, "//button[contains(., 'Export')]"))
         )
+
+        # Another human-like pause (reading the page)
+        time.sleep(random.uniform(0.8, 1.5))
 
         # Apply filters via UI if needed
 
@@ -390,19 +482,21 @@ def download_google_trends_csv(
                 active_button = WebDriverWait(driver, 5).until(
                     EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label*='select trend status']"))
                 )
+                time.sleep(random.uniform(0.3, 0.7))  # Human-like delay before click
                 active_button.click()
-                time.sleep(0.5)
+                time.sleep(random.uniform(0.4, 0.8))
 
                 # Click the toggle switch (it's a button with role="switch")
                 toggle = WebDriverWait(driver, 3).until(
                     EC.element_to_be_clickable((By.CSS_SELECTOR, "button[role='switch'][aria-label='Show active trends only']"))
                 )
+                time.sleep(random.uniform(0.2, 0.5))
                 driver.execute_script("arguments[0].click();", toggle)
-                time.sleep(1)
+                time.sleep(random.uniform(0.8, 1.2))
 
                 # Press ESC to close menu
                 driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
-                time.sleep(1)
+                time.sleep(random.uniform(0.5, 1.0))
             except (TimeoutException, NoSuchElementException) as e:
                 print(f"[WARN] Could not toggle 'Active trends only' filter - using all trends")
                 print(f"       Reason: UI element not found (Google may have changed their interface)")
@@ -413,18 +507,23 @@ def download_google_trends_csv(
         if sort_by.lower() != 'relevance':
             print(f"[INFO] Note: Sort by '{sort_by}' only affects UI display (CSV exports in relevance order)")
 
+        # Human-like delay before clicking Export
+        time.sleep(random.uniform(0.5, 1.2))
+
         # Click Export button
         print("[INFO] Downloading CSV...")
         export_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Export')]"))
         )
+        time.sleep(random.uniform(0.3, 0.6))  # Brief pause before click
         export_button.click()
-        time.sleep(1)
+        time.sleep(random.uniform(0.8, 1.3))
 
         # Click Download CSV
         download_csv = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, 'li[data-action="csv"]'))
         )
+        time.sleep(random.uniform(0.2, 0.5))  # Human-like delay
         driver.execute_script("arguments[0].click();", download_csv)
 
         # Wait for download with dynamic file checking
